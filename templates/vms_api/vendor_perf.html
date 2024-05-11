@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {#    <title>{{ vendor_data.__str__ }}</title>#}
+</head>
+<body>
+{% if error %}
+    <div> {{ error }}</div>
+    {% if graph %}
+        <div style="width:600px;height:500px">
+            {{ graph|safe }}
+        </div>
+    {% endif %}
+{% endif %}
+</body>
+</html>

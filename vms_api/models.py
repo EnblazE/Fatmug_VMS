@@ -1,4 +1,4 @@
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 """
@@ -16,8 +16,8 @@ class Vendor(models.Model):
     This model stores essential information about each vendor and their performance metrics
     """
 
-    def __int__(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def __del__(self):
         pass
@@ -59,8 +59,8 @@ class Purchase_Order(models.Model):
 performance metrics
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def __del__(self):
         pass
@@ -81,20 +81,28 @@ performance metrics
         ("completed", "Completed"),
         ("canceled", "Canceled")
     ), blank=True, null=False, default="pending", max_length=10)
-    quality_rating = models.FloatField(blank=True, null=True)
-    issue_date = models.DateTimeField(blank=True, null=False, default=random_issue_date())
+    quality_rating = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0.0), MaxValueValidator(
+        5.0)])  # rating can be between 0.0 and 5.0
+    issue_date = models.DateTimeField(blank=True, null=False)
     acknowledgment_date = models.DateTimeField(blank=True, null=True)  # this field will be updated automatically
+
+    def save(self, *args, **kwargs):
+        if self.issue_date is None:
+            # if we have no issue date passed, we put a random time on the creation date to mimic the network delay
+            self.issue_date = random_issue_date()
+        super(Purchase_Order, self).save(*args, **kwargs)
 
 
 class Vendor_Performance(models.Model):
-    def __init__(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def __del__(self):
         pass
 
     def __str__(self):
-        pass
+        only_date = self.date.date()  # returns only date part
+        return f"Performance Report - {only_date.day}.{only_date.month}.{only_date.year}"
 
     # all relevant fields
     vendor = models.ForeignKey(Vendor, related_name="vendor_perf", related_query_name="vendor",

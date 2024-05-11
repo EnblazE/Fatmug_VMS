@@ -2,9 +2,83 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Fatmug VMS Home</title>
+    <style>
+        ul > li {
+            padding-left: 3%;
+            padding-block-end: 0.7%;
+            List-style-position: inside;
+
+        }
+
+        li > a {
+            background-color: lightcyan;
+            padding: 0.1%;
+            border-radius: 0.1%;
+        }
+
+        ul > comment {
+            padding-block: 0.3%;
+        }
+    </style>
 </head>
 <body>
+User Active: {{ user.is_authenticated }}
+User Name: {{ user.username }}
+<div style="display: block; padding: 2%; width: 50%">
+    <h1>
+        Welcome to VMS
+    </h1>
+    <p>
+        Eiusmod clita takimata nobis iriure assum soluta autem officia congue, nonumy aute clita mazim nisi nobis
+        sanctus
+        nisl quis non erat augue possim commodi. Sed tempor aliquam augue accusam magna commodi exercitation nibh sea
+        accusam. Laborum veniam eos placerat facilisi. Accumsan adipisici consectetuer.
+    </p>
+    <h2>
+        Let's take a tour of VMS api
+    </h2>
+</div>
+<div style="font-size: larger">
+    <ul>
 
+        <li><a href="{% url 'api_index' %}">{% url 'api_index' %}</a></li>
+
+        <comment style="color: crimson; font-weight: bold">APIs</comment>
+
+        <li><a href="{% url 'vendors_api_endpoints-list' %}">{% url 'vendors_api_endpoints-list' %}</a></li>
+        <li><a href="{% url 'po_api_endpoints-list' %}">{% url 'po_api_endpoints-list' %}</a></li>
+
+        <comment style="color: crimson; font-weight: bold">Authentication</comment>
+
+
+        <li><a href="{% url 'custom_login' %}" id="login_link">{% url 'custom_login' %}</a></li>
+        <li><a href="{% url 'custom_logout' %}" id="logout_link">{% url 'custom_logout' %}</a></li>
+
+        <comment style="color: crimson; font-weight: bold">Relevant</comment>
+
+        <li><a href="{% url 'vendor_perf' 0 %}">/api/vendors/{vendor_id}/performance</a></li>
+        <li><a href="{% url 'acknowledge_order' 0 %}">/api/purchase_orders/{po_id}/acknowledge/</a></li>
+        <li><a href="{% url 'get_auth_token' %}">{% url 'get_auth_token' %}</a></li>
+        {#        <li><a href="{% url 'admin_root' %}">{% url 'admin_root' %}</a></li>#}
+        {#        <li><a href="{% url %}">{% url %}</a></li>#}
+    </ul>
+</div>
+
+<script>
+    document.getElementById('logout_link').addEventListener("click", function (e) {
+        e.preventDefault();
+        const form = document.createElement("form");
+        form.setAttribute("method", "post");
+        form.setAttribute("action", "{% url 'custom_logout' %}");
+        form.style.display = "none";
+        const submit_button = document.createElement("button");
+        submit_button.setAttribute("type", "submit");
+        form.appendChild(submit_button);
+        form.innerHTML += '{% csrf_token %}';
+        document.body.appendChild(form);
+        form.submit();
+    });
+</script>
 </body>
 </html>

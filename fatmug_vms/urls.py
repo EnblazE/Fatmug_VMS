@@ -20,7 +20,7 @@ from django.urls import path, include
 from fatmug_vms import views
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls, name="admin_root"),
     path('', views.index, name="root_index"),
     path('api/', include("vms_api.urls")),  # root url for this project
 ]
