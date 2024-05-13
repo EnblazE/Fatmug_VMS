@@ -26,7 +26,8 @@ class Vendor(models.Model):
         return f"{self.name}(ID: {self.id}, Code: {self.vendor_code})"
 
     # all relevant fields
-    name = models.CharField(max_length=150, blank=False, null=False, validators=[], help_text="Vendor Name in full")
+    name = models.CharField(max_length=150, blank=False, null=False, validators=[],
+                            help_text="Vendor Name in full e.g. Company name or Owner Name")
     contact_details = models.TextField(max_length=1000, blank=False, null=False,
                                        help_text="Vendor contact information")
     address = models.TextField(max_length=1000, blank=False, null=False, help_text="Vendor Official address in "
@@ -73,19 +74,25 @@ performance metrics
                                  help_text="Unique number identifying the PO")
     vendor = models.ForeignKey(Vendor, related_name="vendor_po", blank=False, null=False, on_delete=models.CASCADE)
     order_date = models.DateTimeField(auto_now_add=True, blank=True, null=False)
-    delivery_date = models.DateTimeField(blank=False, null=False)
-    items = models.JSONField(blank=False, null=False)
+    delivery_date = models.DateTimeField(blank=False, null=False, help_text="Delivery date for this order")
+    items = models.JSONField(blank=False, null=False, help_text="Item data in JSON format. Example: {'item1': "
+                                                                "'banana', 'item2': 'colddrink','item3':'soap'}")
     quantity = models.IntegerField(blank=False, null=True, validators=[MinValueValidator(1)])
     status = models.CharField(choices=(
         ("pending", "Pending"),
         ("completed", "Completed"),
         ("canceled", "Canceled")
-    ), blank=True, null=False, default="pending", max_length=10)
+    ), blank=False, null=False, default="pending", max_length=10)
     quality_rating = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0.0), MaxValueValidator(
         5.0)])  # rating can be between 0.0 and 5.0
-    issue_date = models.DateTimeField(blank=True, null=False, default=random_issue_date())  # if we have no issue date
-    # passed, we put a random time on the creation date to mimic the network delay
+    issue_date = models.DateTimeField(blank=True, null=False, )
     acknowledgment_date = models.DateTimeField(blank=True, null=True)  # this field will be updated via external trigger
+
+    def save(self, *args, **kwargs):
+        if self.issue_date is None:
+            # if we have no issue date passed, we put a random time on the creation date to mimic the network delay
+            self.issue_date = random_issue_date()
+        super(Purchase_Order, self).save(*args, **kwargs)
 
 
 class Vendor_Performance(models.Model):

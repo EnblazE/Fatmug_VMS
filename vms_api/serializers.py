@@ -19,12 +19,12 @@ class PurchaseOrderModelSerializer(serializers.ModelSerializer):
         model = Purchase_Order
         # exclude = ("quality_rating", "issue_date", "acknowledgment_date")
         fields = ("po_number", "vendor", "delivery_date", "items", "quantity", "status", "quality_rating", "issue_date",
-                  "acknowledge_button")
+                  "acknowledge_url")
 
-    def get_acknowledge_button(self, obj):
+    def get_acknowledge_url(self, obj):
         request = self.context.get('request')
         if request and request.method == 'GET':
             acknowledge_url = request.build_absolute_uri(
-                reverse('acknowledge-purchase-order', args={'po_id': obj.id}))
-            return f'<a href="{acknowledge_url}" target="_blank"><button>Acknowledge</button></a>'
+                reverse('acknowledge_order', kwargs={'po_id': obj.id}))
+            return acknowledge_url
         return None

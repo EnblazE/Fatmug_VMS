@@ -2,16 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    {#    <title>{{ vendor_data.__str__ }}</title>#}
+    <title>{{ vendor_data.name }}</title>
 </head>
 <body>
+<h3>
+    {{ vendor_data.name }}(Code: {{ vendor_data.vendor_code }})
+</h3>
+<h4>
+    {{ vendor_data.contact_details }}
+</h4>
+<h4>
+    {{ vendor_data.address }}
+</h4>
 {% if error %}
     <div> {{ error }}</div>
-    {% if graph %}
-        <div style="width:600px;height:500px">
-            {{ graph|safe }}
-        </div>
-    {% endif %}
 {% endif %}
+{% if graph_on_time_delivery_rate %}
+    <div style="width:600px;height:500px;display: inline-block;">
+        {{ graph_on_time_delivery_rate|safe }}
+    </div>
+{% endif %}
+{% if graph_quality_rating_avg %}
+    <div style="width:600px;height:500px;display: inline-block">
+        {{ graph_quality_rating_avg|safe }}
+    </div>
+{% endif %}
+{% if graph_avg_response_time %}
+    <div style="width:600px;height:500px;display: inline-block;">
+        {{ graph_avg_response_time|safe }}
+    </div>
+{% endif %}
+{% if graph_fulfillment_rate %}
+    <div style="width:600px;height:500px;display: inline-block">
+        {{ graph_fulfillment_rate|safe }}
+    </div>
+{% endif %}
+
 </body>
 </html>

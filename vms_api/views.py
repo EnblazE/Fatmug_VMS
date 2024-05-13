@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from vms_api.models import Vendor, Purchase_Order, Vendor_Performance
-from django.db.models import Avg, ExpressionWrapper, F, FloatField
+from django.db.models import Avg, ExpressionWrapper, F, IntegerField
 from vms_api.serializers import VendorModelSerializer, PurchaseOrderModelSerializer
 from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication, BasicAuthentication
@@ -38,8 +38,9 @@ def index(request):
 class VendorModelViewset(viewsets.ModelViewSet):
     queryset = Vendor.objects.all()
     serializer_class = VendorModelSerializer
-    authentication_classes = DEFAULT_AUTH_CLASSES
-    permission_classes = DEFAULT_PERM_CLASSES
+
+    # authentication_classes = DEFAULT_AUTH_CLASSES
+    # permission_classes = DEFAULT_PERM_CLASSES
 
     @property
     def default_response_headers(self):
@@ -51,11 +52,11 @@ class VendorModelViewset(viewsets.ModelViewSet):
 class PurchaseOrderViewset(viewsets.ModelViewSet):
     queryset = Purchase_Order.objects.all()
     serializer_class = PurchaseOrderModelSerializer
-    authentication_classes = DEFAULT_AUTH_CLASSES
-    permission_classes = DEFAULT_PERM_CLASSES
+    # authentication_classes = DEFAULT_AUTH_CLASSES
+    # permission_classes = DEFAULT_PERM_CLASSES
 
 
-class AcknowledgePurchaseOrder(APIView):
+class AcknowledgePurchaseOrder(View):
     """
     This view will validate if the purchase order exists and update the acknowledgment status of the purchase order
     and recalculate the average response time of the respective vendor.
@@ -69,7 +70,7 @@ class AcknowledgePurchaseOrder(APIView):
     # So while it might be technically possible to implement acknowledgment using a GET request,
     # it's not recommended for the reasons mentioned above. Using a POST request is more aligned with
     # RESTful principles and ensures that the API behaves predictably and safely.
-    def post(self, request, po_id):
+    def get(self, request, po_id):
         if po_id == 0 or po_id == None:
             # id has not been passed; returns to orders api page
             return redirect('po_api_endpoints-list')
@@ -77,7 +78,7 @@ class AcknowledgePurchaseOrder(APIView):
             try:
                 purchase_order = Purchase_Order.objects.get(id=po_id)
             except Purchase_Order.DoesNotExist:
-                return Response({"error": "Purchase order does not exist."}, status=status.HTTP_404_NOT_FOUND)
+                return JsonResponse({"error": "Purchase order does not exist.", "status": "status.HTTP_404_NOT_FOUND"})
 
             else:
                 # 1. we update the acknowledgment date to current time
@@ -87,30 +88,34 @@ class AcknowledgePurchaseOrder(APIView):
 
                 # 2. now we calculate the average response time
                 if purchase_order.issue_date > purchase_order.acknowledgment_date:
-                    return Response({"message": "Failed to comply. Reason: Order has not been issued yet"},
-                                    status=status.HTTP_200_OK)
+                    return JsonResponse({"message": "Failed to comply. Reason: Order has not been issued yet",
+                                         "status": "status.HTTP_200_OK"}
+                                        )
                 else:
-                    current_vendor = Purchase_Order.vendor
+                    current_vendor = purchase_order.vendor
                     all_orders_from_vendor = current_vendor.vendor_po.all()
                     only_acknowledged_orders = all_orders_from_vendor.exclude(acknowledgment_date__isnull=True)
-
                     average_difference = only_acknowledged_orders.aggregate(
                         avg_difference=Avg(
                             ExpressionWrapper(
-                                (F('acknowledgment_date') - F('issue_date')).total_seconds(),
+                                (F('acknowledgment_date') - F('issue_date')),
                                 # Generally Avg function can't handle datatimefield hence we
                                 # are converting the difference value into seconds (float)
-                                output_field=FloatField()
+                                output_field=IntegerField()
                             )
                         )
-                    )['avg_difference'] or 0
+                    )['avg_difference'] or 0.0
+                    average_difference /= 1000000  # the output from aggregation is combined integer of secs
+                    # and microsecs e.g. output: 1770898501 (1770 secs, 898501 microsecs)
+                    # so we need to convert it to (float) seconds before we save it
 
                     # 3. store the average in vendor object
                     current_vendor.average_response_time = float(average_difference)
                     current_vendor.save()
-                    return Response(
-                        {"message": f"Purchase order acknowledged successfully. Timestamp: {current_full_time}"},
-                        status=status.HTTP_200_OK)
+                    return JsonResponse(
+                        {"message": f"Purchase order acknowledged successfully. Timestamp: {current_full_time}",
+                         "status": "status.HTTP_200_OK"}
+                    )
 
 
 class VendorPerf(View):
@@ -119,9 +124,9 @@ class VendorPerf(View):
     """
     template_name = "vms_api/vendor_perf.html"
 
-    @method_decorator(require_GET)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
+    # @method_decorator(require_GET)
+    # def dispatch(self, request, *args, **kwargs):
+    #     return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, vendor_id):
         """
@@ -140,7 +145,7 @@ class VendorPerf(View):
             self.take_metrics_snapshot(requested_vendor=requested_vendor)  # taking a snapshot
             graphs = PerfGraphs()
             context.update(graphs.get_context_data(vendor_itself=requested_vendor))
-            print(context)
+            
         return render(request, self.template_name, context)
 
     def take_metrics_snapshot(self, requested_vendor):
@@ -168,10 +173,11 @@ class PerfGraphs(TemplateView):
                                                                                 "quality_rating_avg",
                                                                                 "avg_response_time",
                                                                                 "fulfillment_rate"))
-        x = metrics_data_as_l[0]  # x-axis is same for all charts i.e. date of report
+        print("full data:", *metrics_data_as_l, sep="\n")
+        x = [t[0] for t in metrics_data_as_l]  # x-axis is same for all charts i.e. date of report
 
         # 1. plotting chart for on time delivery rate ------------------------------------------------------------------
-        y = metrics_data_as_l[1]
+        y = [t[1] for t in metrics_data_as_l]
         trace1 = go.Scatter(x=x, y=y, marker={'color': 'red', 'symbol': 104, 'size': 10},
                             mode="lines", name='1st Trace')
 
@@ -182,7 +188,7 @@ class PerfGraphs(TemplateView):
         context['graph_on_time_delivery_rate'] = figure.to_html()
 
         # 2. plotting chart for average quality rating -----------------------------------------------------------------
-        y = metrics_data_as_l[2]
+        y = [t[2] for t in metrics_data_as_l]
         trace2 = go.Scatter(x=x, y=y, marker={'color': 'red', 'symbol': 104, 'size': 10},
                             mode="lines", name='2nd Trace')
 
@@ -193,7 +199,7 @@ class PerfGraphs(TemplateView):
         context['graph_quality_rating_avg'] = figure.to_html()
 
         # 3. plotting chart for average response time ------------------------------------------------------------------
-        y = metrics_data_as_l[3]
+        y = [t[3] for t in metrics_data_as_l]
         trace3 = go.Scatter(x=x, y=y, marker={'color': 'red', 'symbol': 104, 'size': 10},
                             mode="lines", name='3rd Trace')
 

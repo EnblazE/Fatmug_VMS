@@ -100,3 +100,5 @@ files can be found under ``../vms_api/tests/``. Each file has it's own setUp fun
 and [rest_framework.test](https://www.django-rest-framework.org/api-guide/testing/) modules.
 Each test_*.py file is intended to perform a specific type of test and named accordingly, for example, test_api.py is
 made to test only API related tests which checks object creation using rest framework api.
+
+![Real-time Vendor performance metrics](https://ibb.co/xfC4zjF)
