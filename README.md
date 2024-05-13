@@ -101,4 +101,4 @@ and [rest_framework.test](https://www.django-rest-framework.org/api-guide/testin
 Each test_*.py file is intended to perform a specific type of test and named accordingly, for example, test_api.py is
 made to test only API related tests which checks object creation using rest framework api.
 
-![Real-time Vendor performance metrics](https://ibb.co/xfC4zjF)
+![Real-time Vendor performance metrics](https://i.ibb.co/xfC4zjF/Untitled.png)
