@@ -51,7 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'vms_api.custommiddleware.TokenMiddleware',
+    # 'vms_api.custommiddleware.TokenMiddleware',
 ]
 
 ROOT_URLCONF = 'fatmug_vms.urls'
@@ -112,7 +112,7 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
@@ -138,6 +138,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 
 LOGIN_REDIRECT_URL = "api_index"

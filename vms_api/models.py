@@ -83,14 +83,9 @@ performance metrics
     ), blank=True, null=False, default="pending", max_length=10)
     quality_rating = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0.0), MaxValueValidator(
         5.0)])  # rating can be between 0.0 and 5.0
-    issue_date = models.DateTimeField(blank=True, null=False)
-    acknowledgment_date = models.DateTimeField(blank=True, null=True)  # this field will be updated automatically
-
-    def save(self, *args, **kwargs):
-        if self.issue_date is None:
-            # if we have no issue date passed, we put a random time on the creation date to mimic the network delay
-            self.issue_date = random_issue_date()
-        super(Purchase_Order, self).save(*args, **kwargs)
+    issue_date = models.DateTimeField(blank=True, null=False, default=random_issue_date())  # if we have no issue date
+    # passed, we put a random time on the creation date to mimic the network delay
+    acknowledgment_date = models.DateTimeField(blank=True, null=True)  # this field will be updated via external trigger
 
 
 class Vendor_Performance(models.Model):

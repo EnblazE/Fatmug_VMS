@@ -25,6 +25,6 @@ class PurchaseOrderModelSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.method == 'GET':
             acknowledge_url = request.build_absolute_uri(
-                reverse('acknowledge-purchase-order', kwargs={'po_id': obj.id}))
+                reverse('acknowledge-purchase-order', args={'po_id': obj.id}))
             return f'<a href="{acknowledge_url}" target="_blank"><button>Acknowledge</button></a>'
         return None

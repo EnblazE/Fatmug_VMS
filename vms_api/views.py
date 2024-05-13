@@ -4,6 +4,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.http import require_GET
@@ -40,17 +41,11 @@ class VendorModelViewset(viewsets.ModelViewSet):
     authentication_classes = DEFAULT_AUTH_CLASSES
     permission_classes = DEFAULT_PERM_CLASSES
 
-    # @property
-    # def default_response_headers(self):
-    #     headers = viewsets.ModelViewSet.default_response_headers.fget(self)
-    #     headers['Authorization'] = 'Token 844a4dbec750aae8546c4f8c5ec9282254da09f4'
-    #     return headers
-
-    def get_authenticators(self):
-        return super().get_authenticators()
-
-    def get_authenticate_header(self, request):
-        return super().get_authenticate_header(request)
+    @property
+    def default_response_headers(self):
+        headers = viewsets.ModelViewSet.default_response_headers.fget(self)
+        # headers['Authorization'] = 'Token ' + self.request.session['auth_token']
+        return headers
 
 
 class PurchaseOrderViewset(viewsets.ModelViewSet):
@@ -75,43 +70,47 @@ class AcknowledgePurchaseOrder(APIView):
     # it's not recommended for the reasons mentioned above. Using a POST request is more aligned with
     # RESTful principles and ensures that the API behaves predictably and safely.
     def post(self, request, po_id):
-        try:
-            purchase_order = Purchase_Order.objects.get(id=po_id)
-        except Purchase_Order.DoesNotExist:
-            return Response({"error": "Purchase order does not exist."}, status=status.HTTP_404_NOT_FOUND)
-
+        if po_id == 0 or po_id == None:
+            # id has not been passed; returns to orders api page
+            return redirect('po_api_endpoints-list')
         else:
-            # 1. we update the acknowledgment date to current time
-            current_full_time = datetime.now()
-            purchase_order.acknowledgment_date = current_full_time
-            purchase_order.save()
+            try:
+                purchase_order = Purchase_Order.objects.get(id=po_id)
+            except Purchase_Order.DoesNotExist:
+                return Response({"error": "Purchase order does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
-            # 2. now we calculate the average response time
-            if purchase_order.issue_date > purchase_order.acknowledgment_date:
-                return Response({"message": "Failed to comply. Reason: Order has not been issued yet"},
-                                status=status.HTTP_200_OK)
             else:
-                current_vendor = Purchase_Order.vendor
-                all_orders_from_vendor = current_vendor.vendor_po.all()
-                only_acknowledged_orders = all_orders_from_vendor.exclude(acknowledgment_date__isnull=True)
+                # 1. we update the acknowledgment date to current time
+                current_full_time = datetime.now()
+                purchase_order.acknowledgment_date = current_full_time
+                purchase_order.save()
 
-                average_difference = only_acknowledged_orders.aggregate(
-                    avg_difference=Avg(
-                        ExpressionWrapper(
-                            (F('acknowledgment_date') - F('issue_date')).total_seconds(),
-                            # Generally Avg function can't handle datatimefield hence we
-                            # are converting the difference value into seconds (float)
-                            output_field=FloatField()
+                # 2. now we calculate the average response time
+                if purchase_order.issue_date > purchase_order.acknowledgment_date:
+                    return Response({"message": "Failed to comply. Reason: Order has not been issued yet"},
+                                    status=status.HTTP_200_OK)
+                else:
+                    current_vendor = Purchase_Order.vendor
+                    all_orders_from_vendor = current_vendor.vendor_po.all()
+                    only_acknowledged_orders = all_orders_from_vendor.exclude(acknowledgment_date__isnull=True)
+
+                    average_difference = only_acknowledged_orders.aggregate(
+                        avg_difference=Avg(
+                            ExpressionWrapper(
+                                (F('acknowledgment_date') - F('issue_date')).total_seconds(),
+                                # Generally Avg function can't handle datatimefield hence we
+                                # are converting the difference value into seconds (float)
+                                output_field=FloatField()
+                            )
                         )
-                    )
-                )['avg_difference'] or 0
+                    )['avg_difference'] or 0
 
-                # 3. store the average in vendor object
-                current_vendor.average_response_time = float(average_difference)
-                current_vendor.save()
-                return Response(
-                    {"message": f"Purchase order acknowledged successfully. Timestamp: {current_full_time}"},
-                    status=status.HTTP_200_OK)
+                    # 3. store the average in vendor object
+                    current_vendor.average_response_time = float(average_difference)
+                    current_vendor.save()
+                    return Response(
+                        {"message": f"Purchase order acknowledged successfully. Timestamp: {current_full_time}"},
+                        status=status.HTTP_200_OK)
 
 
 class VendorPerf(View):
@@ -125,6 +124,12 @@ class VendorPerf(View):
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, vendor_id):
+        """
+        To use this method user needs to add vendor id manually to the url
+        :param request: standard http request
+        :param vendor_id: vendor id of the intended vendor
+        :return: performance metrics page if vendor id is recognised
+        """
         context = {}
         try:
             requested_vendor = Vendor.objects.get(id=vendor_id)
@@ -219,8 +224,7 @@ class CustomLoginView(LoginView):
         super().form_valid(form)
         user = self.request.user
         token, created = Token.objects.get_or_create(user=user)
-        # self.request.session['auth_token'] = token
-        # print(self.request.session['auth_token'])
+        self.request.session['auth_token'] = token.key
         return redirect("api_index")
 
 

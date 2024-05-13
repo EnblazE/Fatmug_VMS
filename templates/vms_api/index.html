@@ -14,7 +14,7 @@
         li > a {
             background-color: lightcyan;
             padding: 0.1%;
-            border-radius: 0.1%;
+            border-radius: 0.2%;
         }
 
         ul > comment {
@@ -42,24 +42,38 @@ User Name: {{ user.username }}
 <div style="font-size: larger">
     <ul>
 
-        <li><a href="{% url 'api_index' %}">{% url 'api_index' %}</a></li>
+        <li><a href="{% url 'api_index' %}">{% url 'api_index' %}</a> - You are here</li>
 
         <comment style="color: crimson; font-weight: bold">APIs</comment>
 
-        <li><a href="{% url 'vendors_api_endpoints-list' %}">{% url 'vendors_api_endpoints-list' %}</a></li>
-        <li><a href="{% url 'po_api_endpoints-list' %}">{% url 'po_api_endpoints-list' %}</a></li>
+        <li><a href="{% url 'vendors_api_endpoints-list' %}">{% url 'vendors_api_endpoints-list' %}</a> - Create,
+            Retrieve, Update, Delete Vendors
+        </li>
+        <li><a href="{% url 'po_api_endpoints-list' %}">{% url 'po_api_endpoints-list' %}</a> - Create, Retrieve,
+            Update,
+            Delete Purchase orders (Note: You need at least one Vendor existed to create a Purchase order)
+        </li>
 
         <comment style="color: crimson; font-weight: bold">Authentication</comment>
 
 
-        <li><a href="{% url 'custom_login' %}" id="login_link">{% url 'custom_login' %}</a></li>
-        <li><a href="{% url 'custom_logout' %}" id="logout_link">{% url 'custom_logout' %}</a></li>
+        <li><a href="{% url 'custom_login' %}" id="login_link">{% url 'custom_login' %}</a> - Visit login page (Warning:
+            You can not use the APIs without logging in)
+        </li>
+        <li><a href="{% url 'custom_logout' %}" id="logout_link">{% url 'custom_logout' %}</a> - Logout from the system.
+        </li>
 
         <comment style="color: crimson; font-weight: bold">Relevant</comment>
 
-        <li><a href="{% url 'vendor_perf' 0 %}">/api/vendors/{vendor_id}/performance</a></li>
-        <li><a href="{% url 'acknowledge_order' 0 %}">/api/purchase_orders/{po_id}/acknowledge/</a></li>
-        <li><a href="{% url 'get_auth_token' %}">{% url 'get_auth_token' %}</a></li>
+        <li><a href="{% url 'vendor_perf' 0 %}">/api/vendors/{vendor_id}/performance</a> - Generates a performance
+            statistics of the selected vendor and shows the historical trends using interactive graphs
+        </li>
+        <li><a href="{% url 'acknowledge_order' 0 %}">/api/purchase_orders/{po_id}/acknowledge/</a> - Acknowledge an
+            order
+        </li>
+        <li><a href="{% url 'get_auth_token' %}">{% url 'get_auth_token' %}</a> - Generate an auth token for token based
+            authorization (Note: username and password must passed with the POST request)
+        </li>
         {#        <li><a href="{% url 'admin_root' %}">{% url 'admin_root' %}</a></li>#}
         {#        <li><a href="{% url %}">{% url %}</a></li>#}
     </ul>
