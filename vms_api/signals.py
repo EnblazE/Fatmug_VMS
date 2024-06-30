@@ -26,7 +26,7 @@ def update_delivery_rate(sender, instance, created, **kwargs):
         only_completed_orders = all_orders_from_vendor.filter(status='completed')
         # calculate new delivery rate
         current_vendor.on_time_delivery_rate = only_completed_orders.filter(
-            delivery_date__gte=datetime.now()).count() / all_orders_from_vendor.count()
+            delivery_date__lte=datetime.now()).count() / all_orders_from_vendor.count()
         # Logic: Count the number of completed POs delivered on or before \
         # delivery_date and divide by the total number of completed POs for that vendor
 
